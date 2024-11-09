@@ -1,31 +1,36 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/security/Pausable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 
-contract AdvancedSmartContract is Ownable, Pausable, Initializable {
-    using SafeMath for uint256;
+contract AdvancedSmartContract is Initializable, OwnableUpgradeable, PausableUpgradeable {
+    using SafeMathUpgradeable for uint256;
     using SafeERC20 for IERC20;
 
     // Event declarations
-    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+    event OwnershipTransfer(address indexed previousOwner, address indexed newOwner);
     event ContractPaused(address account);
     event ContractUnpaused(address account);
     event Upgraded(address indexed implementation);
+    event Transfer(address indexed from, address indexed to, uint256 value);
 
     // State variables and mappings
     mapping(address => uint256) private _balances;
     uint256 private _totalSupply;
 
     // Initialization function
-    function initialize(uint256 initialSupply) public initializer {
+    function initialize(address initialOwner, uint256 initialSupply) public initializer {
+        __Ownable_init(initialOwner); // Initialize Ownable with initialOwner for upgradeable contracts
+        __Pausable_init(); // Initialize Pausable for upgradeable contracts
+
+        // Set initial supply
         _totalSupply = initialSupply;
-        _balances[msg.sender] = initialSupply;
+        _balances[initialOwner] = initialSupply;
     }
 
     // Only owner functions
@@ -48,7 +53,9 @@ contract AdvancedSmartContract is Ownable, Pausable, Initializable {
         require(_balances[msg.sender] >= amount, "Insufficient balance");
         _balances[msg.sender] = _balances[msg.sender].sub(amount);
         _balances[to] = _balances[to].add(amount);
+
         emit Transfer(msg.sender, to, amount);
+
         return true;
     }
 
